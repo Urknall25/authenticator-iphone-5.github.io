@@ -115,6 +115,9 @@
   <script src="otpauth.js"></script>
 
   <script>
+    if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
     var accounts = [];
     try {
       accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
@@ -203,3 +206,4 @@
 
 </body>
 </html>
+
