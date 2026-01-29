@@ -145,24 +145,27 @@ Boot Complete. Launching Interface...
 
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/otpauth/dist/otpauth.umd.min.js"></script>
+  <!-- iOS‑10 SAFE OTPAuth VERSION -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.0.2/otpauth.umd.min.js"></script>
+
   <script>
     let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
 
-    /* FORCE REMOVE BOOT SCREEN (iOS 10 FIX) */
+    /* SUPER-SAFE BOOT REMOVAL FOR iOS 10 */
     function removeBoot() {
-  var boot = document.getElementById("boot");
-  var app = document.getElementById("app");
-  if (boot) boot.style.display = "none";
-  if (app) app.style.opacity = "1";
-}
+      var boot = document.getElementById("boot");
+      var app = document.getElementById("app");
+      if (boot) boot.style.display = "none";
+      if (app) app.style.opacity = "1";
+    }
 
-/* iOS 10–safe boot removal */
-document.addEventListener("DOMContentLoaded", removeBoot);
-window.addEventListener("load", removeBoot);
+    /* Fire as soon as ANYTHING is ready */
+    document.addEventListener("readystatechange", removeBoot);
+    document.addEventListener("DOMContentLoaded", removeBoot);
+    window.addEventListener("load", removeBoot);
 
-/* Fallback safety timer */
-setTimeout(removeBoot, 6000);
+    /* Nuclear fallback */
+    setTimeout(removeBoot, 3000);
 
     function save() {
       localStorage.setItem("accounts", JSON.stringify(accounts));
@@ -247,4 +250,3 @@ setTimeout(removeBoot, 6000);
 
 </body>
 </html>
-
