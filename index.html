@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hacker Authenticator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      background: #000;
+      color: #0aff0a;
+      font-family: "Courier New", monospace;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    /* BOOT SCREEN */
+    #boot {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      padding: 20px;
+      white-space: pre-wrap;
+      font-size: 14px;
+      animation: fadeOut 1s ease forwards;
+      animation-delay: 4s;
+      z-index: 999;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+
+    /* MAIN UI */
+    #app {
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+      animation-delay: 4.2s;
+      padding: 20px;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #0aff0a;
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border-right: 1px solid #0aff0a;
+      cursor: pointer;
+    }
+
+    .tab:last-child {
+      border-right: none;
+    }
+
+    .tab.active {
+      background: #002200;
+      font-weight: bold;
+    }
+
+    /* CARDS */
+    .card {
+      border: 1px solid #0aff0a;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #0aff0a55;
+    }
+
+    .code {
+      font-size: 40px;
+      margin-top: 10px;
+      text-shadow: 0 0 10px #0aff0a;
+    }
+
+    .timer {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #001900;
+      border: 1px solid #0aff0a;
+      color: #0aff0a;
+      border-radius: 5px;
+      font-family: inherit;
+    }
+
+    button:hover {
+      background: #003300;
+    }
+
+    .delete {
+      background: #330000;
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- TERMINAL BOOT ANIMATION -->
+  <div id="boot">
+Initializing Secure Module...
+Loading TOTP Engine...
+Checking Local Storage... OK
+Decrypting Secrets... OK
+Starting UI Renderer...
+Boot Complete. Launching Interface...
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('accounts')">Accounts</div>
+      <div class="tab" onclick="switchTab('add')">Add New</div>
+      <div class="tab" onclick="switchTab('settings')">Settings</div>
+    </div>
+
+    <!-- ACCOUNTS TAB -->
+    <div id="accountsTab">
+      <div id="accounts"></div>
+    </div>
+
+    <!-- ADD NEW TAB -->
+    <div id="addTab" class="hidden">
+      <input id="label" placeholder="Label (e.g. Google)">
+      <input id="secret" placeholder="Secret (Base32)">
+      <button onclick="addAccount()">Add Account</button>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="settingsTab" class="hidden">
+      <p>More features coming soon...</p>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/otpauth/dist/otpauth.umd.min.js"></script>
+  <script>
+    let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+
+    function save() {
+      localStorage.setItem("accounts", JSON.stringify(accounts));
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll("#accountsTab, #addTab, #settingsTab").forEach(t => t.classList.add("hidden"));
+
+      if (tab === "accounts") {
+        document.querySelector(".tab:nth-child(1)").classList.add("active");
+        document.getElementById("accountsTab").classList.remove("hidden");
+      }
+      if (tab === "add") {
+        document.querySelector(".tab:nth-child(2)").classList.add("active");
+        document.getElementById("addTab").classList.remove("hidden");
+      }
+      if (tab === "settings") {
+        document.querySelector(".tab:nth-child(3)").classList.add("active");
+        document.getElementById("settingsTab").classList.remove("hidden");
+      }
+    }
+
+    function addAccount() {
+      const label = document.getElementById("label").value.trim();
+      const secret = document.getElementById("secret").value.trim();
+      if (!label || !secret) return;
+
+      accounts.push({ label, secret });
+      save();
+      render();
+      switchTab("accounts");
+    }
+
+    function deleteAccount(i) {
+      accounts.splice(i, 1);
+      save();
+      render();
+    }
+
+    function generateCode(secret) {
+      const totp = new OTPAuth.TOTP({
+        secret: OTPAuth.Secret.fromB32(secret)
+      });
+      return totp.generate();
+    }
+
+    function render() {
+      const container = document.getElementById("accounts");
+      container.innerHTML = "";
+
+      accounts.forEach((acc, i) => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+          <h3>${acc.label}</h3>
+          <div class="code" id="code-${i}">------</div>
+          <div class="timer" id="timer-${i}"></div>
+          <button class="delete" onclick="deleteAccount(${i})">Delete</button>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    function update() {
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = 30 - (now % 30);
+
+      accounts.forEach((acc, i) => {
+        const code = generateCode(acc.secret);
+        document.getElementById(`code-${i}`).textContent = code;
+        document.getElementById(`timer-${i}`).textContent =
+          `refreshing in ${remaining}s`;
+      });
+    }
+
+    render();
+    setInterval(update, 1000);
+  </script>
+
+</body>
+</html>
