@@ -23,25 +23,13 @@
       padding: 20px;
       white-space: pre-wrap;
       font-size: 14px;
-      animation: fadeOut 1s ease forwards;
-      animation-delay: 4s;
-      z-index: 999;
-    }
-
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
+      z-index: 9999;
     }
 
     /* MAIN UI */
     #app {
       opacity: 0;
-      animation: fadeIn 1s ease forwards;
-      animation-delay: 4.2s;
       padding: 20px;
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
     }
 
     /* TABS */
@@ -57,6 +45,7 @@
       padding: 10px;
       border-right: 1px solid #0aff0a;
       cursor: pointer;
+      -webkit-user-select: none;
     }
 
     .tab:last-child {
@@ -115,7 +104,7 @@
   </style>
 </head>
 
-<body>
+<body ontouchstart="">
 
   <!-- TERMINAL BOOT ANIMATION -->
   <div id="boot">
@@ -132,9 +121,9 @@ Boot Complete. Launching Interface...
 
     <!-- TABS -->
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('accounts')">Accounts</div>
-      <div class="tab" onclick="switchTab('add')">Add New</div>
-      <div class="tab" onclick="switchTab('settings')">Settings</div>
+      <div class="tab active" onclick="switchTab('accounts')" ontouchstart="">Accounts</div>
+      <div class="tab" onclick="switchTab('add')" ontouchstart="">Add New</div>
+      <div class="tab" onclick="switchTab('settings')" ontouchstart="">Settings</div>
     </div>
 
     <!-- ACCOUNTS TAB -->
@@ -146,7 +135,7 @@ Boot Complete. Launching Interface...
     <div id="addTab" class="hidden">
       <input id="label" placeholder="Label (e.g. Google)">
       <input id="secret" placeholder="Secret (Base32)">
-      <button onclick="addAccount()">Add Account</button>
+      <button type="button" onclick="addAccount()">Add Account</button>
     </div>
 
     <!-- SETTINGS TAB -->
@@ -159,6 +148,12 @@ Boot Complete. Launching Interface...
   <script src="https://cdn.jsdelivr.net/npm/otpauth/dist/otpauth.umd.min.js"></script>
   <script>
     let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+
+    /* FORCE REMOVE BOOT SCREEN (iOS 10 FIX) */
+    setTimeout(() => {
+      document.getElementById("boot").style.display = "none";
+      document.getElementById("app").style.opacity = "1";
+    }, 4500);
 
     function save() {
       localStorage.setItem("accounts", JSON.stringify(accounts));
@@ -218,7 +213,7 @@ Boot Complete. Launching Interface...
           <h3>${acc.label}</h3>
           <div class="code" id="code-${i}">------</div>
           <div class="timer" id="timer-${i}"></div>
-          <button class="delete" onclick="deleteAccount(${i})">Delete</button>
+          <button type="button" class="delete" onclick="deleteAccount(${i})">Delete</button>
         `;
 
         container.appendChild(div);
