@@ -150,10 +150,19 @@ Boot Complete. Launching Interface...
     let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
 
     /* FORCE REMOVE BOOT SCREEN (iOS 10 FIX) */
-    setTimeout(() => {
-      document.getElementById("boot").style.display = "none";
-      document.getElementById("app").style.opacity = "1";
-    }, 4500);
+    function removeBoot() {
+  var boot = document.getElementById("boot");
+  var app = document.getElementById("app");
+  if (boot) boot.style.display = "none";
+  if (app) app.style.opacity = "1";
+}
+
+/* iOS 10–safe boot removal */
+document.addEventListener("DOMContentLoaded", removeBoot);
+window.addEventListener("load", removeBoot);
+
+/* Fallback safety timer */
+setTimeout(removeBoot, 6000);
 
     function save() {
       localStorage.setItem("accounts", JSON.stringify(accounts));
@@ -238,3 +247,4 @@ Boot Complete. Launching Interface...
 
 </body>
 </html>
+
